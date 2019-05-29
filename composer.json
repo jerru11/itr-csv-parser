@@ -2,9 +2,10 @@
     "type": "project",
     "license": "proprietary",
     "require": {
-        "php": "^7.0.8",
+        "php": "^7.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "parsecsv/php-parsecsv": "^1.1",
         "symfony/console": "3.4.*",
         "symfony/dotenv": "3.4.*",
         "symfony/flex": "^1.1",

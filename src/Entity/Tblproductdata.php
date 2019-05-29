@@ -12,6 +12,12 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Tblproductdata
 {
+
+    public function __construct()
+    {
+        $this->stmtimestamp=new \DateTime();
+    }
+
     /**
      * @var int
      *
@@ -42,12 +48,6 @@ class Tblproductdata
      */
     private $strproductcode;
 
-    /**
-     * @var \DateTime|null
-     *
-     * @ORM\Column(name="dtmAdded", type="datetime", nullable=true)
-     */
-    private $dtmadded;
 
     /**
      * @var boolean
@@ -59,43 +59,86 @@ class Tblproductdata
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="stmTimestamp", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
+     * @ORM\Column(name="stmTimestamp", type="datetime", nullable=false, options={"default": "CURRENT_TIMESTAMP"})
      */
-    private $stmtimestamp = 'CURRENT_TIMESTAMP';
+    private $stmtimestamp = '';
 
     /**
      * @ORM\Column(type="integer", nullable=true)
      */
-    private $intStock;
+    private $intstock;
 
     /**
      * @ORM\Column(type="float", nullable=true)
      */
-    private $fltCost;
+    private $fltcost;
 
-    public function getIntStock(): ?int
+    public function getIntstock(): ?int
     {
-        return $this->intStock;
+        return $this->intstock;
     }
 
-    public function setIntStock(?int $intStock): self
+    public function setIntstock(?int $intstock): self
     {
-        $this->intStock = $intStock;
+        $this->intstock = $intstock;
 
         return $this;
     }
 
-    public function getFltCost(): ?float
+    public function getFltcost(): ?float
     {
-        return $this->fltCost;
+        return $this->fltcost;
     }
 
-    public function setFltCost(?float $fltCost): self
+    public function setFltCost(?float $fltcost): self
     {
-        $this->fltCost = $fltCost;
+        $this->fltcost = $fltcost;
 
         return $this;
     }
 
+    public function getStrProductName(): ?string
+    {
+        return $this->strproductname;
+    }
+
+    public function setStrProductName(?string $strProductName): ?self
+    {
+        $this->strproductname = $strProductName;
+        return $this;
+    }
+
+    public function getStrProductCode(): ?string
+    {
+        return $this->strproductcode;
+    }
+
+    public function setStrProductCode(?string $strProductCode): ?self
+    {
+        $this->strproductcode = $strProductCode;
+        return $this;
+    }
+
+    public function getStrProductDesc(): ?string
+    {
+        return $this->strproductdesc;
+    }
+
+    public function setStrProductDesc(?string $strProductDesc): ?self
+    {
+        $this->strproductdesc = $strProductDesc;
+        return $this;
+    }
+
+    public function getBoolDiscontinued(): ?bool
+    {
+        return (bool)$this->booldiscontinued;
+    }
+
+    public function setBoolDiscontinued(?bool $boolDiscontinued): ?self
+    {
+        $this->booldiscontinued = (int)$boolDiscontinued;
+        return $this;
+    }
 
 }

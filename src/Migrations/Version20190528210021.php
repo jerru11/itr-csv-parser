@@ -22,7 +22,7 @@ final class Version20190528210021 extends AbstractMigration
         // this up() migration is auto-generated, please modify it to your needs
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
 
-        $this->addSql('ALTER TABLE tblProductData ADD flt_cost DOUBLE PRECISION DEFAULT NULL');
+        $this->addSql('ALTER TABLE tblProductData ADD fltCost DOUBLE PRECISION DEFAULT NULL');
     }
 
     public function down(Schema $schema) : void
@@ -30,6 +30,6 @@ final class Version20190528210021 extends AbstractMigration
         // this down() migration is auto-generated, please modify it to your needs
         $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
 
-        $this->addSql('ALTER TABLE tblProductData DROP flt_cost');
+        $this->addSql('ALTER TABLE tblProductData DROP fltCost');
     }
 }

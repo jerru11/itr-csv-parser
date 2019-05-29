@@ -90,6 +90,9 @@
     "ocramius/proxy-manager": {
         "version": "2.2.2"
     },
+    "parsecsv/php-parsecsv": {
+        "version": "1.1.1"
+    },
     "psr/cache": {
         "version": "1.0.1"
     },
