@@ -50,13 +50,6 @@ class Tblproductdata
 
 
     /**
-     * @var boolean
-     *
-     * @ORM\Column(name="boolDiscontinued", type="boolean", nullable=false, options={"default"=false})
-     */
-    private $booldiscontinued;
-
-    /**
      * @var \DateTime
      *
      * @ORM\Column(name="stmTimestamp", type="datetime", nullable=false, options={"default": "CURRENT_TIMESTAMP"})
@@ -72,6 +65,11 @@ class Tblproductdata
      * @ORM\Column(type="float", nullable=true)
      */
     private $fltcost;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $dtmdiscontinued;
 
     public function getIntstock(): ?int
     {
@@ -130,14 +128,16 @@ class Tblproductdata
         return $this;
     }
 
-    public function getBoolDiscontinued(): ?bool
+
+    public function getDtmDiscontinued(): ?\DateTimeInterface
     {
-        return (bool)$this->booldiscontinued;
+        return $this->dtmdiscontinued;
     }
 
-    public function setBoolDiscontinued(?bool $boolDiscontinued): ?self
+    public function setDtmDiscontinued(?\DateTimeInterface $dtmDiscontinued): self
     {
-        $this->booldiscontinued = (int)$boolDiscontinued;
+        $this->dtmdiscontinued = $dtmDiscontinued;
+
         return $this;
     }
 

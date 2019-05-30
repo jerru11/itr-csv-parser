@@ -30,9 +30,10 @@ class CsvProcessProductsCommand extends Command
     public function __construct($name = null, ContainerInterface $container = null)
     {
         parent::__construct($name);
-        $this->container = $container;
-        $this->entityManager = $this->container->get('doctrine')->getManager();
-
+        if ($container) {
+            $this->container = $container;
+            $this->entityManager = $this->container->get('doctrine')->getManager();
+        }
 
     }
 
@@ -59,7 +60,7 @@ class CsvProcessProductsCommand extends Command
 
         // asking for file until get it
         while (!$this->isCsvFile($input->getArgument('pathToFile'))) {
-            $io->warning('FILE <' .( $input->getArgument('pathToFile') ?: '...'). '> is not scv file');
+            $io->warning('FILE <' . ($input->getArgument('pathToFile') ?: '...') . '> is not scv file');
             $input->setArgument('pathToFile', $io->ask('set the path for csv!'));
         }
     }
@@ -102,14 +103,18 @@ class CsvProcessProductsCommand extends Command
         $Csv = new \ParseCsv\Csv($pathToCsv);
 
         $countSuccess = $countErrors = 0;
-        $isTest=$input->getOption('isTest');
-        if($isTest){
+        $isTest = $input->getOption('isTest');
+        if ($isTest) {
             $io->comment('Test run without saving into database');
         }
         foreach ($Csv->data as $datum) {
-            if ($this->saveProductFromData($datum, $io,$isTest )) {
+            try {
+                $this->saveProductFromData($datum, $isTest);
                 $countSuccess++;
-            } else {
+            } catch (\Exception $exception) {
+                $io->warning($exception->getMessage());
+                // for case of sql connection closing because of error
+                $this->reconnectDb();
                 $countErrors++;
             }
         }
@@ -124,26 +129,38 @@ class CsvProcessProductsCommand extends Command
     /**
      * saving product with validation
      * @param array $csvRowData
-     * @param SymfonyStyle $io
      * @param bool $isTest
-     * @return bool
+     * @throws \Exception
      */
-    private function saveProductFromData(array $csvRowData, SymfonyStyle $io, bool $isTest = false): bool
+    public function saveProductFromData(array $csvRowData, bool $isTest = false): void
     {
         // validating count of the columns
         if (count($csvRowData) !== 6) {
-            $io->warning('Product code "' . $csvRowData['Product Code'] . '" - invalid count of columns!');
-            return false;
+            throw new \Exception('Product code "' . $csvRowData['Product Code'] . '" - invalid count of columns!');
         }
 
         // checking for product with the same code
-        $repository = $this->container->get('doctrine')->getRepository(Tblproductdata::class);
-        $productSameCode = $repository->findOneBy([
-            'strproductcode' => $csvRowData['Product Code'],
-        ]);
-        if ($productSameCode) {
-            $io->warning('Product code "' . $csvRowData['Product Code'] . '" -already added!');
-            return false;
+        if ($this->container) {
+            $repProducts = $this->container->get('doctrine')->getRepository(Tblproductdata::class);
+            $productSameCode = $repProducts->findOneBy([
+                'strproductcode' => $csvRowData['Product Code'],
+            ]);
+            if ($productSameCode) {
+                throw new \Exception('Product code "' . $csvRowData['Product Code'] . '" - already exists!');
+            }
+        }
+
+        $productCost = (float)preg_replace(array('/[^0-9\.\,]/', '/\,/'), array('', '.'), $csvRowData['Cost in GBP']);
+        $productStock = (int)$csvRowData['Stock'];
+
+        $minCost = 5;
+        $minStock = 10;
+        if ($productCost < $minCost && $productStock < $minStock) {
+            throw new \Exception('Product code "' . $csvRowData['Product Code'] . '" -  costs less that $' . $minCost . ' and has less than ' . $minStock . ' stock!');
+        }
+        $maxCost = 1000;
+        if ($productCost > $maxCost) {
+            throw new \Exception('Product code "' . $csvRowData['Product Code'] . '" -  cost over $' . $maxCost . ' !');
         }
 
 
@@ -153,31 +170,27 @@ class CsvProcessProductsCommand extends Command
             ->setStrProductCode($csvRowData['Product Code'])
             ->setStrProductName($csvRowData['Product Name'])
             ->setStrProductDesc($csvRowData['Product Description'])
-            ->setIntstock((int)$csvRowData['Stock'])
-            // clear var fo float
-            ->setFltCost((float)preg_replace(array('/[^0-9\.\,]/', '/\,/'), array('', '.'), $csvRowData['Cost in GBP']))
-            ->setBoolDiscontinued(strtolower($csvRowData['Discontinued']) === 'yes');
-        $saved = true;
-        try {
-            if (!$isTest) {
-                $this->entityManager->persist($product);
-                $this->entityManager->flush();
-            }
-        } catch (\Exception $exception) {
-            $this->reconnectDb();
-            $saved = false;
-            $io->warning('Product code "' . $csvRowData['Product Code'] . '" - error saving to database!' . "\n" . $exception->getMessage());
+            ->setIntstock($productStock)
+            ->setFltCost($productCost);
+
+        if (strtolower($csvRowData['Discontinued']) === 'yes') {
+            $product->setDtmDiscontinued(new  \DateTime());
         }
 
-        return $saved;
+
+        if (!$isTest) {
+            $this->entityManager->persist($product);
+            $this->entityManager->flush();
+        }
+
     }
 
     /**
      * reopen connection on errors
      */
-    private function reconnectDb()
+    private function reconnectDb(): void
     {
-        if (!$this->entityManager->isOpen()) {
+        if ($this->entityManager && !$this->entityManager->isOpen()) {
             $this->entityManager = $this->entityManager->create(
                 $this->entityManager->getConnection(),
                 $this->entityManager->getConfiguration()
